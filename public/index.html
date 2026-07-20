@@ -1,0 +1,192 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>MessyNet API Feed — Demo Console</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body class="view-client">
+  <div class="page">
+    <header class="header">
+      <div class="header-title">
+        <span class="logo-dot"></span>
+        <div>
+          <h1>MessyNet API Feed</h1>
+          <p class="subtitle">Live demo console — push-based delivery, running against the real Feed Engine</p>
+        </div>
+      </div>
+      <div class="header-actions">
+        <div id="view-toggle" class="segmented" role="tablist" aria-label="View">
+          <button class="segment" data-view="client" role="tab" type="button">Client view</button>
+          <button class="segment" data-view="tech" role="tab" type="button">Technical view</button>
+        </div>
+        <button id="theme-toggle" class="btn btn-ghost" type="button" aria-label="Toggle color theme">◐ Theme</button>
+        <a class="btn btn-ghost" href="groundtruth.html" style="text-decoration:none;display:inline-flex;align-items:center" title="Switch to the Ground Truth brand identity">Ground&nbsp;Truth&nbsp;↗</a>
+      </div>
+    </header>
+
+    <div class="demo-controls card">
+      <div class="control-group">
+        <label class="switch-label">
+          <span class="switch"><input id="auto-toggle" type="checkbox" /><span class="switch-track"></span></span>
+          <span><strong>Auto-deliver</strong> <span class="control-hint" id="auto-hint">off — feeds arrive on their own when on</span></span>
+        </label>
+      </div>
+      <div class="control-group">
+        <label class="switch-label">
+          <span class="switch"><input id="outage-toggle" type="checkbox" /><span class="switch-track"></span></span>
+          <span><strong>Simulate client outage</strong> <span class="control-hint">webhook endpoint returns 503 → watch retries &amp; dead-letter (PRD §7.2)</span></span>
+        </label>
+      </div>
+      <div id="demo-status" class="control-status" role="status"></div>
+    </div>
+
+    <main class="layout">
+      <aside class="sidebar">
+        <h2 class="section-label">Clients</h2>
+        <div id="client-list" class="client-list"></div>
+
+        <h2 class="section-label" style="margin-top: 24px">Architecture</h2>
+        <div class="mini-architecture">
+          <div>Layer 3 — Delivery</div>
+          <div class="mini-arch-row"><span class="pill pill-muted">Data API v2</span><span class="mini-arch-note">pull</span></div>
+          <div class="mini-arch-row"><span class="pill pill-accent">API Feed</span><span class="mini-arch-note">push (this)</span></div>
+          <div class="mini-arch-row"><span class="pill pill-muted">Mobile Alerts</span><span class="mini-arch-note">human push</span></div>
+        </div>
+      </aside>
+
+      <section class="main">
+        <!-- ============ CLIENT VIEW ============ -->
+        <div class="card" id="client-dashboard" data-view="client">
+          <div class="empty-state">Loading…</div>
+        </div>
+
+        <!-- ============ TECHNICAL VIEW ============ -->
+        <div class="card" id="feed-detail-card" data-view="tech">
+          <div class="empty-state">Select a client to see its feed configuration.</div>
+        </div>
+
+        <div class="card" data-view="tech">
+          <h2 class="card-title">Feed Engine <span class="card-title-note">(PRD §2.3)</span></h2>
+          <div id="stepper" class="stepper">
+            <div class="step" data-step="scheduler"><div class="step-dot"></div><div class="step-label">Scheduler</div><div class="step-note">—</div></div>
+            <div class="step-connector"></div>
+            <div class="step" data-step="extractor"><div class="step-dot"></div><div class="step-label">Extractor</div><div class="step-note">—</div></div>
+            <div class="step-connector"></div>
+            <div class="step" data-step="formatter"><div class="step-dot"></div><div class="step-label">Formatter</div><div class="step-note">—</div></div>
+            <div class="step-connector"></div>
+            <div class="step" data-step="delivery"><div class="step-dot"></div><div class="step-label">Delivery Agent</div><div class="step-note">—</div></div>
+            <div class="step-connector"></div>
+            <div class="step" data-step="runlog"><div class="step-dot"></div><div class="step-label">Run Logger</div><div class="step-note">—</div></div>
+          </div>
+        </div>
+
+        <div class="results-grid" data-view="tech">
+          <div class="card">
+            <h2 class="card-title">What the client receives</h2>
+            <div id="receipt" class="receipt">
+              <div class="empty-state">Trigger a run to see the delivered payload.</div>
+            </div>
+          </div>
+
+          <div class="card">
+            <h2 class="card-title">Run Log <span class="card-title-note">GET /v2/feed/runs</span></h2>
+            <div id="run-log-wrap" class="table-wrap">
+              <table class="run-table">
+                <thead>
+                  <tr><th>Time</th><th>Client</th><th>Feed</th><th>Mechanism</th><th>Status</th><th>Attempts</th></tr>
+                </thead>
+                <tbody id="run-log-body"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" id="dlq-card" data-view="tech">
+          <h2 class="card-title">Dead-letter Queue <span class="card-title-note">(PRD §7.2 — exhausted retries)</span></h2>
+          <div id="dlq-body"><div class="empty-state">Empty — no delivery has exhausted its retries.</div></div>
+        </div>
+
+        <!-- ============ BOTH VIEWS ============ -->
+        <div class="card" data-view="both">
+          <h2 class="card-title">Pull vs Push <span class="card-title-note">(PRD §2.2 — why the API Feed exists)</span></h2>
+          <div class="compare-grid">
+            <div class="compare-col">
+              <div class="compare-head">
+                <span class="pill pill-muted">Data API v2 — pull</span>
+                <span class="compare-analogy">the library — you go get the book</span>
+              </div>
+              <pre class="code-block"><code># your team builds &amp; maintains this
+*/15 * * * *  run poll_messynet.py
+
+def poll():
+    for page in paginate(api.query(...)):
+        handle_rate_limits(page)
+        dedupe_and_store(page)
+    # …and retries, backoff, alerting,
+    # cursor state, schema drift checks</code></pre>
+              <ul class="compare-list">
+                <li>You own the schedule, pagination &amp; rate limits</li>
+                <li>You own retries, failure recovery, monitoring</li>
+                <li>Engineering time spent on plumbing, not analysis</li>
+              </ul>
+            </div>
+            <div class="compare-col compare-col-accent">
+              <div class="compare-head">
+                <span class="pill pill-accent">API Feed — push</span>
+                <span class="compare-analogy">the newspaper — it arrives on schedule</span>
+              </div>
+              <pre class="code-block"><code>// configure once, at contract time
+{
+  "feed_type": "atlas",
+  "cadence": "0 0 * * *",
+  "delivery": {
+    "mechanism": "webhook",
+    "endpoint": "https://your-stack/feed",
+    "hmac_enabled": true
+  }
+}</code></pre>
+              <ul class="compare-list">
+                <li>MessyNet owns delivery, retries &amp; the dead-letter queue</li>
+                <li>Schema locked at contract — versioned, stable (§5.1)</li>
+                <li id="compare-live-counter">Deliveries received while this page has been open: <strong>0</strong></li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" data-view="tech">
+          <h2 class="card-title">Delta Polling Playground <span class="card-title-note">GET /v2/feed/{feed_type}</span></h2>
+          <form id="delta-form" class="delta-form">
+            <label>Client
+              <select id="delta-client"></select>
+            </label>
+            <label>Feed type
+              <select id="delta-feed-type"></select>
+            </label>
+            <label>Since
+              <input id="delta-since" type="datetime-local" />
+            </label>
+            <label>Limit
+              <input id="delta-limit" type="number" min="1" value="500" />
+            </label>
+            <button type="submit" class="btn btn-primary">Query</button>
+          </form>
+          <div class="delta-test-buttons">
+            <button id="test-bad-key" class="btn btn-ghost btn-sm" type="button">Test invalid key → expect 401</button>
+            <button id="test-no-since" class="btn btn-ghost btn-sm" type="button">Test missing "since" → expect 400</button>
+            <button id="test-wrong-scope" class="btn btn-ghost btn-sm" type="button">Test wrong scope → expect 403</button>
+          </div>
+          <div id="delta-status" class="delta-status"></div>
+          <pre id="delta-response" class="json-viewer"><span class="muted">Response will appear here.</span></pre>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div id="chart-tooltip" class="chart-tooltip" hidden></div>
+  <script src="charts.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,30 @@
+{
+  "name": "messynet-api-feed",
+  "version": "0.1.0",
+  "description": "MessyNet API Feed - push-based scheduled delivery of structured intelligence outputs (PRD v0.9)",
+  "private": true,
+  "type": "commonjs",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "start": "node dist/index.js",
+    "dev": "ts-node src/index.ts",
+    "demo": "ts-node src/demo/runDemo.ts",
+    "demo:console": "ts-node src/demo/demoServer.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "node-cron": "^3.0.3",
+    "parquetjs-lite": "^0.8.7"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.21",
+    "@types/node": "^20.14.2",
+    "@types/node-cron": "^3.0.11",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.5.2"
+  }
+}
