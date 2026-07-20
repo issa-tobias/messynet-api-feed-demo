@@ -1,0 +1,11 @@
+# Render blueprint: deploys the demo console as a free web service.
+# One-click: https://render.com/deploy?repo=https://github.com/issa-tobias/messynet-api-feed-demo
+services:
+  - type: web
+    name: messynet-api-feed-demo
+    runtime: node
+    plan: free
+    buildCommand: npm ci && npm run build
+    startCommand: npm run demo:console:prod
+    healthCheckPath: /health
+    autoDeploy: true

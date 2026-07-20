@@ -13,6 +13,7 @@
     "dev": "ts-node src/index.ts",
     "demo": "ts-node src/demo/runDemo.ts",
     "demo:console": "ts-node src/demo/demoServer.ts",
+    "demo:console:prod": "node dist/demo/demoServer.js",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

@@ -25,7 +25,9 @@ import { createWebhookReceiver } from "./webhookReceiver";
 import { buildDashboardData } from "./dashboardData";
 import { WebhookDeliveryConfig } from "../types/config";
 
-const PORT = Number(process.env.DEMO_PORT) || 4200;
+// PORT is what hosting platforms (Render, Cloud Run) inject; DEMO_PORT
+// keeps the local override; 4200 is the local default.
+const PORT = Number(process.env.PORT) || Number(process.env.DEMO_PORT) || 4200;
 const INBOX_PATH = "/demo/messynet-feed";
 const DROP_ROOT = path.join(process.cwd(), ".data-drops");
 // Compressed version of the §7.2 exponential backoff (5 min/30 min/2 h/6 h
